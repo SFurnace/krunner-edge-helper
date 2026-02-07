@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+/tmp/
+
+# User bookmarks (NEVER commit these!)
+Bookmarks
+Bookmarks.bak
+**/Bookmarks
+
+# Cache
+.cache/
+__pycache__/
+
+# Test outputs
+test_output.txt
