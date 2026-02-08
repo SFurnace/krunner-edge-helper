@@ -114,6 +114,19 @@ FUZZY_THRESHOLD = 60
 
 ## 🔧 Troubleshooting | 故障排除
 
+### Run tests before installation | 安装前运行测试
+
+```bash
+# Test bookmark parsing and search
+python3 tests/test.py
+
+# Test DBus service
+python3 tests/test_dbus.py
+
+# Test search with your bookmarks
+python3 tests/test_search.py
+```
+
 ### Plugin not appearing in KRunner
 
 ```bash
@@ -198,6 +211,27 @@ kquitapp5 krunner
                │   pinyin     │
                │   matcher    │
                └──────────────┘
+```
+
+### Project Structure | 项目结构
+
+```
+krunner-edge-helper/
+├── edge_bookmarks_runner.py      # Main DBus service
+├── bookmark_parser.py             # Bookmark parsing
+├── search_engine.py               # Search logic
+├── pinyin_matcher.py              # Chinese pinyin support
+├── config.py                      # Configuration
+├── requirements.txt               # Python dependencies
+├── install.sh / uninstall.sh      # Installation scripts
+├── *.desktop / *.service          # KDE service files
+├── tests/                         # Test files
+│   ├── test.py                    # Main test suite
+│   ├── test_search.py             # Search tests
+│   └── test_dbus.py               # DBus tests
+└── docs/                          # Documentation
+    ├── CHANGELOG.md               # Version history
+    └── SEARCH_ALGORITHM.md        # Search algorithm details
 ```
 
 ## 🤝 Contributing | 贡献

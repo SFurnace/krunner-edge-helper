@@ -32,6 +32,26 @@ fi
 
 echo "✓ pip3 found"
 
+# Stop any running instances FIRST
+echo
+echo "Stopping any running instances..."
+RUNNING_PIDS=$(ps aux | grep "edge_bookmarks_runner.py" | grep -v grep | awk '{print $2}')
+if [ -n "$RUNNING_PIDS" ]; then
+    for pid in $RUNNING_PIDS; do
+        kill $pid 2>/dev/null && echo "  Killed process $pid"
+    done
+    sleep 2
+else
+    echo "  No running instances found"
+fi
+
+# Clean old installation and caches
+echo
+echo "Cleaning old installation and caches..."
+rm -f "$PLUGIN_DIR"/*.pyc
+rm -rf "$PLUGIN_DIR"/__pycache__
+echo "  ✓ Cache cleaned"
+
 # Install Python dependencies
 echo
 echo "Installing Python dependencies..."
@@ -77,8 +97,24 @@ echo "✓ DBus service file installed to $DBUS_SERVICE_DIR"
 echo
 echo "Restarting KRunner..."
 killall krunner 2>/dev/null || true
-kquitapp5 krunner 2>/dev/null || true
+kquitapp5 krunner 2>/dev/null || kquitapp6 krunner 2>/dev/null || true
 sleep 2
+
+# Start the plugin
+echo
+echo "Starting plugin..."
+python3 "$PLUGIN_DIR/$PLUGIN_NAME" > /tmp/edge_bookmarks.log 2>&1 &
+PLUGIN_PID=$!
+sleep 2
+
+# Verify installation
+if ps -p $PLUGIN_PID > /dev/null 2>&1; then
+    echo "✓ Plugin started successfully (PID: $PLUGIN_PID)"
+else
+    echo "✗ Plugin failed to start"
+    echo "Check logs: cat /tmp/edge_bookmarks.log"
+    exit 1
+fi
 
 echo
 echo "=== Installation Complete ==="
@@ -95,7 +131,8 @@ echo "  - Trigger keyword"
 echo "  - Search settings"
 echo
 echo "Troubleshooting:"
-echo "  - Check logs: journalctl --user -f | grep edge_bookmarks"
+echo "  - Check logs: cat /tmp/edge_bookmarks.log"
 echo "  - Manual start: python3 $PLUGIN_DIR/$PLUGIN_NAME"
 echo "  - Restart KRunner: kquitapp5 krunner"
+echo "  - Use restart script: $SCRIPT_DIR/restart_plugin.sh"
 echo
