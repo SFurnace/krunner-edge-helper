@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Edge Bookmarks KRunner Plugin
+KRunner Edge Helper
 DBus-based plugin for searching Edge bookmarks in KRunner
 """
 import dbus
@@ -21,12 +21,12 @@ import config
 
 
 # DBus interface names
-SERVICE_NAME = "org.kde.plasma.runner.edgebookmarks"
-OBJECT_PATH = "/EdgeBookmarks"
+SERVICE_NAME = "org.kde.krunner.edgehelper"
+OBJECT_PATH = "/EdgeHelper"
 IFACE = "org.kde.krunner1"
 
 
-class EdgeBookmarksRunner(dbus.service.Object):
+class KRunnerEdgeHelper(dbus.service.Object):
     """KRunner plugin for Edge bookmarks"""
     
     def __init__(self):
@@ -44,7 +44,7 @@ class EdgeBookmarksRunner(dbus.service.Object):
         # Load bookmarks
         self._load_bookmarks()
         
-        print(f"Edge Bookmarks Runner initialized with {len(self.bookmarks)} bookmarks")
+        print(f"KRunner Edge Helper initialized with {len(self.bookmarks)} bookmarks")
     
     def _load_bookmarks(self):
         """Load bookmarks from file"""
@@ -185,11 +185,11 @@ class EdgeBookmarksRunner(dbus.service.Object):
 
 def main():
     """Main entry point"""
-    runner = EdgeBookmarksRunner()
+    runner = KRunnerEdgeHelper()
     
     loop = GLib.MainLoop()
     
-    print("Edge Bookmarks KRunner plugin running...")
+    print("KRunner Edge Helper plugin running...")
     try:
         loop.run()
     except KeyboardInterrupt:

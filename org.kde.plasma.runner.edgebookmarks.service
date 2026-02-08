@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.kde.plasma.runner.edgebookmarks
-Exec=USER_HOME_PLACEHOLDER/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py

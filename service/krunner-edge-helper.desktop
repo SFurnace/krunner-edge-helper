@@ -1,0 +1,20 @@
+[Desktop Entry]
+Name=KRunner Edge Helper
+Name[zh_CN]=KRunner Edge 助手
+Comment=Search Microsoft Edge bookmarks in KRunner
+Comment[zh_CN]=在 KRunner 中搜索 Microsoft Edge 浏览器书签
+Icon=internet-web-browser
+Type=Service
+X-KDE-ServiceTypes=Plasma/Runner
+
+X-Plasma-API=DBus
+X-Plasma-DBusRunner-Service=org.kde.krunner.edgehelper
+X-Plasma-DBusRunner-Path=/EdgeHelper
+
+X-Plasma-Request-Actions-Once=false
+X-KDE-PluginInfo-Name=krunner-edge-helper
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-Author=Curtis Cao
+X-KDE-PluginInfo-Email=
+X-KDE-PluginInfo-License=MIT
+X-KDE-PluginInfo-EnabledByDefault=true

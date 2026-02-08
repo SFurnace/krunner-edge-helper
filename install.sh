@@ -1,17 +1,16 @@
 #!/bin/bash
-# Installation script for Edge Bookmarks KRunner Plugin
+# Installation script for KRunner Edge Helper
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_NAME="edge_bookmarks_runner.py"
-DESKTOP_FILE="plasma-runner-edge-bookmarks.desktop"
 
 # Installation directories
-PLUGIN_DIR="$HOME/.local/share/krunner/dbusplugins"
+PLUGIN_DIR="$HOME/.local/share/krunner/dbusplugins/krunner-edge-helper"
 DBUS_SERVICE_DIR="$HOME/.local/share/dbus-1/services"
+DBUSPLUGINS_DIR="$HOME/.local/share/krunner/dbusplugins"
 
-echo "=== Edge Bookmarks KRunner Plugin Installation ==="
+echo "=== KRunner Edge Helper Installation ==="
 echo
 
 # Check if Python 3 is installed
@@ -35,7 +34,7 @@ echo "✓ pip3 found"
 # Stop any running instances FIRST
 echo
 echo "Stopping any running instances..."
-RUNNING_PIDS=$(ps aux | grep "edge_bookmarks_runner.py" | grep -v grep | awk '{print $2}')
+RUNNING_PIDS=$(ps aux | grep "krunner_edge_helper.py" | grep -v grep | awk '{print $2}')
 if [ -n "$RUNNING_PIDS" ]; then
     for pid in $RUNNING_PIDS; do
         kill $pid 2>/dev/null && echo "  Killed process $pid"
@@ -48,9 +47,8 @@ fi
 # Clean old installation and caches
 echo
 echo "Cleaning old installation and caches..."
-rm -f "$PLUGIN_DIR"/*.pyc
-rm -rf "$PLUGIN_DIR"/__pycache__
-echo "  ✓ Cache cleaned"
+rm -rf "$PLUGIN_DIR"
+echo "  ✓ Old installation cleaned"
 
 # Install Python dependencies
 echo
@@ -59,39 +57,39 @@ pip3 install --user -r "$SCRIPT_DIR/requirements.txt"
 
 echo "✓ Dependencies installed"
 
-# Create directories if they don't exist
+# Create directories
 mkdir -p "$PLUGIN_DIR"
 mkdir -p "$DBUS_SERVICE_DIR"
+mkdir -p "$DBUSPLUGINS_DIR"
 
 echo "✓ Directories created"
 
-# Copy plugin files
+# Copy plugin files to subdirectory
 echo
 echo "Installing plugin files..."
 
-# Copy main plugin
-cp "$SCRIPT_DIR/$PLUGIN_NAME" "$PLUGIN_DIR/"
-chmod +x "$PLUGIN_DIR/$PLUGIN_NAME"
+# Copy all source files
+cp "$SCRIPT_DIR/src/krunner_edge_helper.py" "$PLUGIN_DIR/"
+cp "$SCRIPT_DIR/src/bookmark_parser.py" "$PLUGIN_DIR/"
+cp "$SCRIPT_DIR/src/search_engine.py" "$PLUGIN_DIR/"
+cp "$SCRIPT_DIR/src/pinyin_matcher.py" "$PLUGIN_DIR/"
+cp "$SCRIPT_DIR/src/config.py" "$PLUGIN_DIR/"
 
-# Copy supporting modules
-cp "$SCRIPT_DIR/bookmark_parser.py" "$PLUGIN_DIR/"
-cp "$SCRIPT_DIR/search_engine.py" "$PLUGIN_DIR/"
-cp "$SCRIPT_DIR/pinyin_matcher.py" "$PLUGIN_DIR/"
-cp "$SCRIPT_DIR/config.py" "$PLUGIN_DIR/"
-
-# Copy desktop file to plugin directory (KDE 6)
-cp "$SCRIPT_DIR/$DESKTOP_FILE" "$PLUGIN_DIR/"
-
-# Copy DBus service file (create it from template)
-cat > "$DBUS_SERVICE_DIR/org.kde.plasma.runner.edgebookmarks.service" << EOF
-[D-BUS Service]
-Name=org.kde.plasma.runner.edgebookmarks
-Exec=$PLUGIN_DIR/$PLUGIN_NAME
-EOF
+# Make main script executable
+chmod +x "$PLUGIN_DIR/krunner_edge_helper.py"
 
 echo "✓ Plugin files installed to $PLUGIN_DIR"
-echo "✓ Desktop file installed to $PLUGIN_DIR"
+
+# Install DBus service file
+sed "s|USER_HOME_PLACEHOLDER|$HOME|g" "$SCRIPT_DIR/service/org.kde.krunner.edgehelper.service" \
+    > "$DBUS_SERVICE_DIR/org.kde.krunner.edgehelper.service"
+
 echo "✓ DBus service file installed to $DBUS_SERVICE_DIR"
+
+# Install desktop file to dbusplugins root (KDE 6 requirement)
+cp "$SCRIPT_DIR/service/krunner-edge-helper.desktop" "$DBUSPLUGINS_DIR/"
+
+echo "✓ Desktop file installed to $DBUSPLUGINS_DIR"
 
 # Restart KRunner
 echo
@@ -103,7 +101,7 @@ sleep 2
 # Start the plugin
 echo
 echo "Starting plugin..."
-python3 "$PLUGIN_DIR/$PLUGIN_NAME" > /tmp/edge_bookmarks.log 2>&1 &
+python3 "$PLUGIN_DIR/krunner_edge_helper.py" > /tmp/krunner_edge_helper.log 2>&1 &
 PLUGIN_PID=$!
 sleep 2
 
@@ -112,7 +110,7 @@ if ps -p $PLUGIN_PID > /dev/null 2>&1; then
     echo "✓ Plugin started successfully (PID: $PLUGIN_PID)"
 else
     echo "✗ Plugin failed to start"
-    echo "Check logs: cat /tmp/edge_bookmarks.log"
+    echo "Check logs: cat /tmp/krunner_edge_helper.log"
     exit 1
 fi
 
@@ -131,8 +129,8 @@ echo "  - Trigger keyword"
 echo "  - Search settings"
 echo
 echo "Troubleshooting:"
-echo "  - Check logs: cat /tmp/edge_bookmarks.log"
-echo "  - Manual start: python3 $PLUGIN_DIR/$PLUGIN_NAME"
+echo "  - Check logs: cat /tmp/krunner_edge_helper.log"
+echo "  - Manual start: python3 $PLUGIN_DIR/krunner_edge_helper.py"
 echo "  - Restart KRunner: kquitapp5 krunner"
 echo "  - Use restart script: $SCRIPT_DIR/restart_plugin.sh"
 echo

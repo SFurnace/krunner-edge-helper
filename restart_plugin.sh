@@ -1,13 +1,14 @@
 #!/bin/bash
-# Diagnostic and restart script for Edge Bookmarks KRunner Plugin
+# Diagnostic and restart script for KRunner Edge Helper
 
-echo "=== Edge Bookmarks KRunner Plugin - Diagnostic & Restart ==="
+PLUGIN_DIR="$HOME/.local/share/krunner/dbusplugins/krunner-edge-helper"
+
+echo "=== KRunner Edge Helper - Diagnostic & Restart ==="
 echo
 
 # Kill any running instances
 echo "1. Stopping any running instances..."
-# Get all PIDs for edge_bookmarks_runner.py
-PIDS=$(ps aux | grep "edge_bookmarks_runner.py" | grep -v grep | awk '{print $2}')
+PIDS=$(ps aux | grep "krunner_edge_helper.py" | grep -v grep | awk '{print $2}')
 if [ -n "$PIDS" ]; then
     for pid in $PIDS; do
         kill $pid 2>/dev/null && echo "   Killed process $pid"
@@ -20,16 +21,14 @@ sleep 2
 # Clear Python cache
 echo
 echo "2. Clearing Python cache..."
-cd "$(dirname "$0")"
-rm -rf __pycache__ *.pyc
-find . -name "*.pyc" -delete 2>/dev/null
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+rm -rf "$PLUGIN_DIR/__pycache__"
+rm -f "$PLUGIN_DIR"/*.pyc
 echo "   ✓ Cache cleared"
 
 # Start the plugin
 echo
-echo "3. Starting Edge Bookmarks plugin..."
-python3 "$(dirname "$0")/edge_bookmarks_runner.py" > /tmp/edge_bookmarks.log 2>&1 &
+echo "3. Starting KRunner Edge Helper..."
+python3 "$PLUGIN_DIR/krunner_edge_helper.py" > /tmp/krunner_edge_helper.log 2>&1 &
 PLUGIN_PID=$!
 sleep 2
 
@@ -38,14 +37,14 @@ if ps -p $PLUGIN_PID > /dev/null; then
     echo "   ✓ Plugin started (PID: $PLUGIN_PID)"
 else
     echo "   ✗ Plugin failed to start"
-    echo "   Check log: cat /tmp/edge_bookmarks.log"
+    echo "   Check log: cat /tmp/krunner_edge_helper.log"
     exit 1
 fi
 
 # Test DBus
 echo
 echo "4. Testing DBus interface..."
-TEST_RESULT=$(dbus-send --session --print-reply --dest=org.kde.plasma.runner.edgebookmarks /EdgeBookmarks org.kde.krunner1.Match string:"b test" 2>&1)
+TEST_RESULT=$(dbus-send --session --print-reply --dest=org.kde.krunner.edgehelper /EdgeHelper org.kde.krunner1.Match string:"b test" 2>&1)
 
 if echo "$TEST_RESULT" | grep -q "bookmark_"; then
     echo "   ✓ DBus working - found results!"
@@ -73,7 +72,7 @@ echo "  2. Type: b <search term>"
 echo "  3. You should see matching bookmarks"
 echo
 echo "Troubleshooting:"
-echo "  - Plugin log: cat /tmp/edge_bookmarks.log"
+echo "  - Plugin log: cat /tmp/krunner_edge_helper.log"
 echo "  - Plugin PID: $PLUGIN_PID"
 echo "  - Stop plugin: kill $PLUGIN_PID"
 echo "  - Restart: $0"

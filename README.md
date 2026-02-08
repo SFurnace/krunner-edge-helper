@@ -1,263 +1,120 @@
-# KDE KRunner Edge Bookmarks Plugin
+# KRunner Edge Helper
 
-一个用于 KDE Plasma 的 KRunner 插件，可以快速搜索和打开 Microsoft Edge 浏览器书签。
+> 一个用于在 KDE Plasma 的 KRunner 中搜索 Microsoft Edge 书签的插件
 
-A KDE KRunner plugin for quickly searching and opening Microsoft Edge browser bookmarks.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.7+-green)](https://www.python.org/)
 
-## ✨ Features | 特性
+## ✨ 特性
 
-- 🔍 **Fuzzy Search** | 模糊搜索 - Find bookmarks with partial matches
-- 🇨🇳 **Chinese Pinyin Support** | 中文拼音支持 - Search Chinese bookmarks using pinyin
-  - Full pinyin: `b zhongguo` → finds "中国"
-  - Pinyin initials: `b zg` → finds "中国"
-- ⚡ **Fast Performance** | 高性能 - Cached bookmarks with auto-reload
-- 🎯 **Smart Ranking** | 智能排序 - Results ranked by relevance
-- 🌐 **Edge Integration** | Edge 集成 - Works with Edge Flatpak and system installations
+- 🔍 **多关键词搜索** - 支持空格分隔的多个关键词，所有关键词必须匹配 (AND 逻辑)
+- 🇨🇳 **拼音搜索** - 支持中文拼音全拼和首字母搜索（如 `lsx` → `流水线`）
+- ⚡ **智能匹配** - 分层匹配算法：精确 → 单词边界 → 前缀 → 拼音 → 子串
+- 📁 **文件夹搜索** - 同时搜索书签标题和所属文件夹名称
+- 🎯 **精确排序** - 按匹配质量智能排序结果
+- 🚀 **零冲突** - 独立子目录安装，不与其他插件冲突
 
-## 📋 Requirements | 系统要求
-
-- KDE Plasma 5.12+
-- Python 3.6+
-- Microsoft Edge browser
-- pip3 (Python package manager)
-
-## 🚀 Installation | 安装
-
-### Quick Install | 快速安装
+## 🚀 快速开始
 
 ```bash
+git clone https://github.com/yourusername/krunner-edge-helper.git
 cd krunner-edge-helper
-./install.sh
+bash install.sh
 ```
 
-The installation script will:
-1. Install Python dependencies
-2. Copy plugin files to `~/.local/share/krunner/dbusplugins/`
-3. Install desktop file to `~/.local/share/kservices5/`
-4. Restart KRunner
+使用：
+1. 按 `Alt+Space` 打开 KRunner
+2. 输入 `b github` 搜索书签
+3. 按 `Enter` 打开选中的书签
 
-### Manual Install | 手动安装
+## 📚 搜索示例
 
 ```bash
-# Install dependencies
-pip3 install --user -r requirements.txt
-
-# Create directories
-mkdir -p ~/.local/share/krunner/dbusplugins
-mkdir -p ~/.local/share/kservices5
-
-# Copy files
-cp edge_bookmarks_runner.py bookmark_parser.py search_engine.py \
-   pinyin_matcher.py config.py ~/.local/share/krunner/dbusplugins/
-
-cp plasma-runner-edge-bookmarks.desktop ~/.local/share/kservices5/
-
-# Make executable
-chmod +x ~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py
-
-# Restart KRunner
-kquitapp5 krunner
+b github              # 搜索包含 "github" 的书签
+b eo cls              # 同时包含 "eo" 和 "cls" (AND逻辑)
+b lsx                 # 拼音首字母搜索 "流水线"
+b edge 文档            # 混合中英文搜索
 ```
 
-## 📖 Usage | 使用方法
+## ⚙️ 配置
 
-1. Open KRunner: `Alt+Space` or `Alt+F2`
-2. Type `b` followed by your search query
-3. Select a bookmark from the results
-4. Press `Enter` to open
-
-### Examples | 示例
-
-```
-b github          # Search for "github"
-b 中国            # Search for Chinese text
-b zhongguo        # Search using full pinyin
-b zg              # Search using pinyin initials
-b python doc      # Fuzzy search
-```
-
-## ⚙️ Configuration | 配置
-
-Edit `~/.local/share/krunner/dbusplugins/config.py` to customize:
+编辑 `~/.local/share/krunner/dbusplugins/krunner-edge-helper/config.py`：
 
 ```python
-# Bookmark file location
+# 书签文件路径
 DEFAULT_BOOKMARK_PATH = "~/.var/app/com.microsoft.Edge/config/microsoft-edge/Default/Bookmarks"
 
-# Trigger keyword (change from 'b' to your preference)
+# 触发关键词
 TRIGGER_KEYWORD = "b"
 
-# Maximum number of results
+# 最大结果数
 MAX_RESULTS = 10
-
-# Minimum fuzzy match score (0-100)
-FUZZY_THRESHOLD = 60
 ```
 
-### Finding Your Bookmark File | 查找书签文件
-
-**Flatpak Edge:**
-```bash
-~/.var/app/com.microsoft.Edge/config/microsoft-edge/Default/Bookmarks
-```
-
-**System Edge:**
-```bash
-~/.config/microsoft-edge/Default/Bookmarks
-```
-
-**Multiple Profiles:**
-```bash
-~/.config/microsoft-edge/Profile 1/Bookmarks
-~/.config/microsoft-edge/Profile 2/Bookmarks
-```
-
-## 🔧 Troubleshooting | 故障排除
-
-### Run tests before installation | 安装前运行测试
+## 🔧 管理
 
 ```bash
-# Test bookmark parsing and search
-python3 tests/test.py
-
-# Test DBus service
-python3 tests/test_dbus.py
-
-# Test search with your bookmarks
-python3 tests/test_search.py
+bash restart_plugin.sh    # 重启插件
+bash uninstall.sh         # 卸载插件
+cat /tmp/krunner_edge_helper.log  # 查看日志
 ```
 
-### Plugin not appearing in KRunner
-
-```bash
-# Check if desktop file is installed
-ls ~/.local/share/kservices5/plasma-runner-edge-bookmarks.desktop
-
-# Check if plugin files exist
-ls ~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py
-
-# Restart KRunner
-kquitapp5 krunner
-killall krunner
-```
-
-### No bookmarks found
-
-```bash
-# Verify bookmark file exists
-ls -la ~/.var/app/com.microsoft.Edge/config/microsoft-edge/Default/Bookmarks
-
-# Check file permissions
-chmod 644 ~/.var/app/com.microsoft.Edge/config/microsoft-edge/Default/Bookmarks
-
-# Test manually
-python3 ~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py
-```
-
-### View logs
-
-```bash
-# Watch plugin logs
-journalctl --user -f | grep edge_bookmarks
-
-# Or check KRunner output
-krunner --replace 2>&1 | grep -i edge
-```
-
-### Dependencies issues
-
-```bash
-# Reinstall dependencies
-pip3 install --user --force-reinstall -r requirements.txt
-
-# Check installed packages
-pip3 list | grep -E "pypinyin|rapidfuzz|dbus-python|PyQt5"
-```
-
-## 🗑️ Uninstallation | 卸载
-
-```bash
-# Remove plugin files
-rm -rf ~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py
-rm -f ~/.local/share/krunner/dbusplugins/{bookmark_parser,search_engine,pinyin_matcher,config}.py
-
-# Remove desktop file
-rm -f ~/.local/share/kservices5/plasma-runner-edge-bookmarks.desktop
-
-# Restart KRunner
-kquitapp5 krunner
-```
-
-## 📝 Architecture | 架构
-
-```
-┌─────────────────┐
-│    KRunner      │
-└────────┬────────┘
-         │ DBus
-┌────────▼─────────────────────┐
-│  edge_bookmarks_runner.py    │
-│  (DBus Service)               │
-└──┬──────────────┬────────────┘
-   │              │
-   ▼              ▼
-┌──────────┐   ┌──────────────┐
-│ bookmark │   │    search    │
-│  parser  │   │    engine    │
-└──────────┘   └──────┬───────┘
-                      │
-                      ▼
-               ┌──────────────┐
-               │   pinyin     │
-               │   matcher    │
-               └──────────────┘
-```
-
-### Project Structure | 项目结构
+## 📁 项目结构
 
 ```
 krunner-edge-helper/
-├── edge_bookmarks_runner.py      # Main DBus service
-├── bookmark_parser.py             # Bookmark parsing
-├── search_engine.py               # Search logic
-├── pinyin_matcher.py              # Chinese pinyin support
-├── config.py                      # Configuration
-├── requirements.txt               # Python dependencies
-├── install.sh / uninstall.sh      # Installation scripts
-├── *.desktop / *.service          # KDE service files
-├── tests/                         # Test files
-│   ├── test.py                    # Main test suite
-│   ├── test_search.py             # Search tests
-│   └── test_dbus.py               # DBus tests
-└── docs/                          # Documentation
-    ├── CHANGELOG.md               # Version history
-    └── SEARCH_ALGORITHM.md        # Search algorithm details
+├── src/                          # 源代码
+│   ├── krunner_edge_helper.py    # DBus服务主体
+│   ├── bookmark_parser.py        # 书签解析器
+│   ├── search_engine.py          # 搜索引擎
+│   ├── pinyin_matcher.py         # 拼音匹配
+│   └── config.py                 # 配置文件
+├── service/                      # 服务配置
+│   ├── org.kde.krunner.edgehelper.service
+│   └── krunner-edge-helper.desktop
+├── docs/                         # 文档
+│   ├── ARCHITECTURE.md           # 架构说明
+│   └── SEARCH_ALGORITHM.md       # 搜索算法
+├── install.sh                    # 安装脚本
+├── uninstall.sh                  # 卸载脚本
+└── restart_plugin.sh             # 重启脚本
 ```
 
-## 🤝 Contributing | 贡献
+## 🛠️ 故障排除
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
+### 插件未显示
 
-## 📄 License | 许可证
+```bash
+ps aux | grep krunner_edge_helper  # 检查进程
+bash restart_plugin.sh             # 重启插件
+kquitapp5 krunner                  # 重启KRunner (KDE5)
+kquitapp6 krunner                  # 重启KRunner (KDE6)
+```
 
-MIT License - Feel free to use and modify
+### 搜索无结果
 
-## 🙏 Acknowledgments | 致谢
+1. 检查书签文件路径是否正确
+2. 确认 Edge 已经保存过书签
+3. 查看日志：`cat /tmp/krunner_edge_helper.log`
 
-- Built with [pypinyin](https://github.com/mozillazg/python-pinyin) for Chinese pinyin support
-- Uses [RapidFuzz](https://github.com/maxbachmann/RapidFuzz) for fast fuzzy matching
-- Inspired by the KDE KRunner plugin ecosystem
+### 代码更新后结果不变
 
-## 📮 Support | 支持
+```bash
+bash uninstall.sh  # 完全卸载
+bash install.sh    # 重新安装
+```
 
-If you encounter any issues, please:
-1. Check the troubleshooting section above
-2. Review the logs: `journalctl --user -f | grep edge_bookmarks`
-3. Test manually: `python3 ~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py`
+## 📚 详细文档
 
----
+- [架构文档](docs/ARCHITECTURE.md) - DBus服务、目录结构、命名规范
+- [搜索算法](docs/SEARCH_ALGORITHM.md) - 匹配层级、评分规则
 
-**Enjoy快速搜索！Happy Searching! 🚀**
+## 📄 许可证
+
+MIT License
+
+## 🙏 致谢
+
+- [KDE Plasma](https://kde.org/plasma-desktop/) - KRunner 框架
+- [pypinyin](https://github.com/mozillazg/python-pinyin) - 拼音转换
+- [rapidfuzz](https://github.com/maxbachmann/RapidFuzz) - 模糊匹配

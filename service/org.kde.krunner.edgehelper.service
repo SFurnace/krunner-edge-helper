@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.kde.krunner.edgehelper
+Exec=USER_HOME_PLACEHOLDER/.local/share/krunner/dbusplugins/krunner-edge-helper/krunner_edge_helper.py
