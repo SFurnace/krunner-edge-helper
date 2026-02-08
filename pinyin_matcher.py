@@ -64,34 +64,35 @@ class PinyinMatcher:
     
     def score_match(self, text: str, query: str) -> int:
         """
-        Score how well the query matches the text
+        Score how well the query matches the text with pinyin
         Returns score 0-100, higher is better
+        Pinyin matching has higher priority
         """
         query = query.lower()
         text_lower = text.lower()
         
-        # Exact match
-        if query == text_lower:
-            return 100
-        
-        # Starts with query
-        if text_lower.startswith(query):
-            return 95
-        
-        # Contains query
-        if query in text_lower:
-            return 80
-        
-        # Check pinyin matches if contains Chinese
+        # Check pinyin matches first if contains Chinese
         if self.contains_chinese(text):
             variations = self.get_pinyin_variations(text)
             
             for i, variation in enumerate(variations):
+                # Exact match with pinyin variation
                 if query == variation:
-                    return 90 - (i * 5)  # Prefer original > full pinyin > initials
+                    return 95 - (i * 3)
+                # Starts with pinyin variation (prefix match)
                 elif variation.startswith(query):
-                    return 75 - (i * 5)
+                    return 88 - (i * 3)
+                # Contains query in pinyin variation (substring match)
                 elif query in variation:
-                    return 60 - (i * 5)
+                    return 75 - (i * 3)
+        
+        # Fallback to original text match (lower priority than pinyin)
+        # Exact match with original text
+        if query == text_lower:
+            return 100
+        
+        # Starts with query (original text)
+        if text_lower.startswith(query):
+            return 85
         
         return 0

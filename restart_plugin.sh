@@ -6,16 +6,30 @@ echo
 
 # Kill any running instances
 echo "1. Stopping any running instances..."
-for pid in $(ps aux | grep "edge_bookmarks_runner.py" | grep -v grep | awk '{print $2}'); do
-    kill $pid 2>/dev/null
-    echo "   Killed process $pid"
-done
-sleep 1
+# Get all PIDs for edge_bookmarks_runner.py
+PIDS=$(ps aux | grep "edge_bookmarks_runner.py" | grep -v grep | awk '{print $2}')
+if [ -n "$PIDS" ]; then
+    for pid in $PIDS; do
+        kill $pid 2>/dev/null && echo "   Killed process $pid"
+    done
+else
+    echo "   No running instances found"
+fi
+sleep 2
+
+# Clear Python cache
+echo
+echo "2. Clearing Python cache..."
+cd "$(dirname "$0")"
+rm -rf __pycache__ *.pyc
+find . -name "*.pyc" -delete 2>/dev/null
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
+echo "   ✓ Cache cleared"
 
 # Start the plugin
 echo
-echo "2. Starting Edge Bookmarks plugin..."
-~/.local/share/krunner/dbusplugins/edge_bookmarks_runner.py > /tmp/edge_bookmarks.log 2>&1 &
+echo "3. Starting Edge Bookmarks plugin..."
+python3 "$(dirname "$0")/edge_bookmarks_runner.py" > /tmp/edge_bookmarks.log 2>&1 &
 PLUGIN_PID=$!
 sleep 2
 
@@ -30,7 +44,7 @@ fi
 
 # Test DBus
 echo
-echo "3. Testing DBus interface..."
+echo "4. Testing DBus interface..."
 TEST_RESULT=$(dbus-send --session --print-reply --dest=org.kde.plasma.runner.edgebookmarks /EdgeBookmarks org.kde.krunner1.Match string:"b test" 2>&1)
 
 if echo "$TEST_RESULT" | grep -q "bookmark_"; then
@@ -45,7 +59,7 @@ fi
 
 # Restart KRunner
 echo
-echo "4. Restarting KRunner..."
+echo "5. Restarting KRunner..."
 kquitapp5 krunner 2>/dev/null || kquitapp6 krunner 2>/dev/null
 sleep 2
 echo "   ✓ KRunner restarted"

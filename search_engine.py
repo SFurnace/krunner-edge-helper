@@ -17,7 +17,7 @@ class SearchEngine:
     
     def search(self, bookmarks: List[Bookmark], query: str) -> List[Tuple[Bookmark, int]]:
         """
-        Search bookmarks with fuzzy and pinyin matching
+        Search bookmarks with multi-keyword matching and pinyin support
         Returns: List of (bookmark, score) tuples sorted by score descending
         """
         if not query:
@@ -26,65 +26,126 @@ class SearchEngine:
         results = []
         query = query.strip()
         
+        # Split query into keywords by space
+        keywords = [kw.strip() for kw in query.split() if kw.strip()]
+        
         for bookmark in bookmarks:
-            score = self._calculate_score(bookmark, query)
+            score = self._calculate_score(bookmark, keywords)
             
             if score >= config.FUZZY_THRESHOLD:
                 results.append((bookmark, score))
         
-        # Sort by score descending
-        results.sort(key=lambda x: x[1], reverse=True)
+        # Sort by score descending, prefer shorter names when scores are close
+        results.sort(key=lambda x: (-x[1], len(x[0].name), x[0].name.lower()))
         
         # Limit results
         return results[:config.MAX_RESULTS]
     
-    def _calculate_score(self, bookmark: Bookmark, query: str) -> int:
-        """Calculate relevance score for a bookmark"""
+    def _calculate_score(self, bookmark: Bookmark, keywords: List[str]) -> int:
+        """Calculate relevance score for a bookmark with multi-keyword matching"""
         
-        # Score based on name (weighted higher)
-        name_score = self._score_text(bookmark.name, query)
+        if not keywords:
+            return 0
         
-        # Score based on URL (weighted lower)
-        url_score = self._score_text(bookmark.url, query) * 0.5
+        # For multi-keyword search, all keywords must match
+        name_scores = []
+        folder_scores = []
         
-        # Score based on folder (weighted lowest)
-        folder_score = self._score_text(bookmark.folder, query) * 0.3
+        for keyword in keywords:
+            name_score = self._score_text(bookmark.name, keyword)
+            folder_score = self._score_text(bookmark.folder, keyword)
+            
+            # Each keyword must match at least one field
+            max_score_for_keyword = max(name_score, folder_score)
+            
+            if max_score_for_keyword == 0:
+                # If any keyword doesn't match, return 0
+                return 0
+            
+            name_scores.append(name_score)
+            folder_scores.append(folder_score)
         
-        # Combined score
-        total_score = max(name_score, url_score, folder_score)
+        # Calculate weighted sum score
+        # Name and folder have equal weight, but only count fields that matched
+        avg_name_score = sum(name_scores) / len(name_scores)
+        avg_folder_score = sum(folder_scores) / len(folder_scores)
         
-        return int(total_score)
+        # Use the maximum of the two scores (prioritize best match)
+        total_score = max(avg_name_score, avg_folder_score)
+        
+        # Bonus if both fields match
+        if avg_name_score > 0 and avg_folder_score > 0:
+            total_score = min(total_score + 5, 100)
+        
+        # Small bonus for matching all keywords in name
+        if all(score > 0 for score in name_scores):
+            total_score = total_score + 3
+        
+        # Additional small bonus: prefer matches at start of name
+        if bookmark.name and keywords:
+            name_lower = bookmark.name.lower()
+            if name_lower.startswith(keywords[0].lower()):
+                total_score = total_score + 2
+        
+        return int(min(total_score, 100))
     
-    def _score_text(self, text: str, query: str) -> float:
-        """Score how well query matches text"""
+    def _score_text(self, text: str, keyword: str) -> float:
+        """Score how well a single keyword matches text (supports pinyin)"""
         if not text:
             return 0
         
-        query = query.lower()
+        keyword = keyword.lower()
         text_lower = text.lower()
         
-        # Try pinyin matching first (if text contains Chinese)
+        # First try pinyin matching for Chinese text (higher priority)
         if self.pinyin_matcher.contains_chinese(text):
-            pinyin_score = self.pinyin_matcher.score_match(text, query)
+            pinyin_score = self.pinyin_matcher.score_match(text, keyword)
             if pinyin_score > 0:
                 return float(pinyin_score)
         
-        # Exact match
-        if query == text_lower:
+        # For non-Chinese text
+        import re
+        
+        # Exact match (complete text)
+        if keyword == text_lower:
             return 100.0
         
-        # Substring match
-        if query in text_lower:
-            # Score based on position (earlier is better)
-            position = text_lower.index(query)
-            position_penalty = min(position * 2, 30)
-            return 90.0 - position_penalty
+        # Complete word match (keyword is a standalone word)
+        word_pattern = r'\b' + re.escape(keyword) + r'\b'
+        match = re.search(word_pattern, text_lower)
+        if match:
+            # Complete word at the start
+            if text_lower.startswith(keyword + ' ') or text_lower.startswith(keyword + '-') or text_lower.startswith(keyword + '_'):
+                return 98.0
+            # Complete word (but text starts with this word, like "Edgeone" contains "edge")
+            if text_lower.startswith(keyword):
+                return 92.0
+            # Complete word elsewhere
+            return 95.0
         
-        # Fuzzy matching
-        # Use token_set_ratio for better partial matching
-        fuzzy_score = fuzz.token_set_ratio(query, text_lower)
+        # Prefix match (text starts with keyword but keyword is not complete word)
+        if text_lower.startswith(keyword):
+            return 85.0
         
-        # Also try partial ratio
-        partial_score = fuzz.partial_ratio(query, text_lower)
+        # Word prefix match (any word starts with keyword)
+        # Split by non-alphanumeric characters
+        words = re.split(r'[^a-z0-9]+', text_lower)
+        for i, word in enumerate(words):
+            if word and word.startswith(keyword):
+                # Earlier words get higher scores
+                return 80.0 - (i * 2)
         
-        return max(fuzzy_score, partial_score)
+        # Substring match within a word (lower priority)
+        # Only match if keyword is at least 2 characters to avoid too many false positives
+        if len(keyword) >= 2 and keyword in text_lower:
+            # Find if keyword is within a single word
+            for i, word in enumerate(words):
+                if word and keyword in word and not word.startswith(keyword):
+                    # Keyword is inside a word, but check it's a meaningful match
+                    # Avoid matching random character sequences
+                    # Only match if it's near the beginning of the word
+                    pos = word.find(keyword)
+                    if pos <= 3:  # Within first 4 characters
+                        return 65.0 - (i * 2) - (pos * 2)
+        
+        return 0
