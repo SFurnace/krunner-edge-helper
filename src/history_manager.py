@@ -50,6 +50,8 @@ class HistoryManager:
     def _ensure_data_dir(self):
         """Create data directory if not exists"""
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        # Set directory permissions to 700 (only owner can read/write/execute)
+        self.data_dir.chmod(0o700)
 
     def _load(self):
         """Load history from file"""
@@ -69,6 +71,8 @@ class HistoryManager:
         try:
             with open(self.data_file, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, ensure_ascii=False, indent=2)
+            # Set file permissions to 600 (only owner can read/write)
+            self.data_file.chmod(0o600)
         except IOError as e:
             print(f"Error saving history: {e}")
 

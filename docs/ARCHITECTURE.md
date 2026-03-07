@@ -212,7 +212,7 @@ def Run(match_id: str, action_id: str):
 4. **复制文件**：
    - 源码 → `~/.local/share/krunner/dbusplugins/krunner-edge-helper/`
    - 服务 → `~/.local/share/dbus-1/services/`
-   - 桌面 → `~/.local/share/kservices5/`
+   - 桌面 → `~/.local/share/krunner/dbusplugins/`（KDE 6 要求放在根目录）
 5. **替换占位符**：`USER_HOME_PLACEHOLDER` → 实际家目录
 6. **启动服务**：后台运行 Python 进程
 7. **验证**：检查进程是否存活

@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-KRunner Edge Helper 是一个 KDE Plasma KRunner 插件，通过 DBus 实现 Microsoft Edge 书签搜索。使用 Python 3 编写，提供模糊搜索、拼音匹配和使用历史排序功能。
+KRunner Edge Helper 是一个 KDE Plasma KRunner 插件，通过 DBus 实现 Microsoft Edge 书签搜索。使用 Python 3 编写，提供多层级文本匹配、拼音匹配和使用历史排序功能。
 
 ## 开发命令
 
@@ -117,4 +117,4 @@ SearchEngine.search() → 按关键词过滤 → 评分匹配
 3. Desktop 文件在 `dbusplugins/` 根目录（不在子目录）
 4. 运行 `restart_plugin.sh` 测试 DBus 连通性
 
-**添加功能**: `search_engine.py` 中的搜索层级使用显式布尔标志。分数为 0-100 的整数。历史奖励（0-25）在模糊匹配后添加。
+**添加功能**: `search_engine.py` 中的搜索层级使用显式布尔标志。分数为 0-100 的整数。历史奖励（最高20分）在文本匹配后添加。

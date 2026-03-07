@@ -98,7 +98,7 @@ class KRunnerEdgeHelper(dbus.service.Object):
                 else:
                     subtext = bookmark.url
 
-                # Relevance already calculated by search_engine (80% base + 20% history)
+                # Relevance already calculated by search_engine (base capped at 80 + history up to 20)
                 # Just normalize for KRunner format
                 relevance = int(min(score, 100))
                 relevance_score = min(score / 100.0, 1.0)

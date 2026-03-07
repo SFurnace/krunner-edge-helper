@@ -1,6 +1,6 @@
 """
 Search Engine for Edge Bookmarks
-Combines fuzzy search, pinyin matching, and history-based ranking
+Combines text matching, pinyin matching, and history-based ranking
 """
 from typing import List, Tuple
 from bookmark_parser import Bookmark

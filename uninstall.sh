@@ -61,8 +61,7 @@ fi
 # Step 7: Restart KRunner
 echo
 echo "7. Restarting KRunner..."
-killall krunner 2>/dev/null || true
-kquitapp5 krunner 2>/dev/null || kquitapp6 krunner 2>/dev/null || true
+kquitapp6 krunner 2>/dev/null || kquitapp5 krunner 2>/dev/null || killall krunner 2>/dev/null || true
 sleep 2
 echo "   ✓ KRunner restarted"
 
@@ -73,5 +72,5 @@ echo "All plugin files, processes, and caches have been removed."
 echo
 echo "Note: Python dependencies were NOT removed."
 echo "To remove them manually, run:"
-echo "  pip3 uninstall pypinyin rapidfuzz dbus-python PyQt5"
+echo "  pip3 uninstall pypinyin dbus-python PyGObject"
 echo

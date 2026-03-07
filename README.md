@@ -53,7 +53,7 @@ MAX_RESULTS = 10
 
 # 历史记录设置
 HISTORY_ENABLED = True              # 启用历史记录排序
-HISTORY_BONUS_MAX = 25              # 历史记录最大加分
+HISTORY_SCORE_MAX = 20              # 历史记录最大加分（20分）
 HISTORY_HALF_LIFE_DAYS = 30.0       # 时间衰减半衰期（天）
 ```
 
@@ -124,4 +124,3 @@ MIT License
 
 - [KDE Plasma](https://kde.org/plasma-desktop/) - KRunner 框架
 - [pypinyin](https://github.com/mozillazg/python-pinyin) - 拼音转换
-- [rapidfuzz](https://github.com/maxbachmann/RapidFuzz) - 模糊匹配

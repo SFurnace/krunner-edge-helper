@@ -95,8 +95,7 @@ echo "✓ Desktop file installed to $DBUSPLUGINS_DIR"
 # Restart KRunner
 echo
 echo "Restarting KRunner..."
-killall krunner 2>/dev/null || true
-kquitapp5 krunner 2>/dev/null || kquitapp6 krunner 2>/dev/null || true
+kquitapp6 krunner 2>/dev/null || kquitapp5 krunner 2>/dev/null || killall krunner 2>/dev/null || true
 sleep 2
 
 # Start the plugin

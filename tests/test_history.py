@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import config
 config.HISTORY_ENABLED = True
 config.HISTORY_HALF_LIFE_DAYS = 30.0
-config.HISTORY_BONUS_MAX = 25
+config.HISTORY_SCORE_MAX = 20
 config.HISTORY_MIN_THRESHOLD_BYPASS = 0.5
 config.HISTORY_RETENTION_DAYS = 180
 
