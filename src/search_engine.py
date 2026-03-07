@@ -54,13 +54,13 @@ class SearchEngine:
                 # Allow history-boosted results slightly below threshold
                 results.append((bookmark, final_score))
 
-        # Sort by final score descending, history weight as tiebreaker
+        # Sort by final score descending, base score as primary, history as tiebreaker
+        # Internal sorting uses base similarity score only
         def sort_key(item):
             bookmark, score = item
-            history_weight = 0.0
-            if self.history_manager:
-                history_weight = self.history_manager.get_weight(original_query, bookmark.url)
-            return (-score, -history_weight, len(bookmark.name), bookmark.name.lower())
+            # Use base score for primary sorting
+            # Secondary sort by name length and alphabetically for determinism
+            return (-score, len(bookmark.name), bookmark.name.lower())
 
         results.sort(key=sort_key)
 
