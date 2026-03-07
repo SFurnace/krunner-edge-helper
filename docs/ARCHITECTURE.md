@@ -11,6 +11,7 @@ krunner-edge-helper/
 │   ├── bookmark_parser.py        # 书签解析器
 │   ├── search_engine.py          # 搜索引擎
 │   ├── pinyin_matcher.py         # 拼音匹配器
+│   ├── history_manager.py        # 历史记录管理器
 │   └── config.py                 # 配置文件
 ├── service/                      # 服务配置文件
 │   ├── org.kde.krunner.edgehelper.service    # DBus 服务定义
@@ -37,6 +38,8 @@ krunner-edge-helper/
     ├── config.py
     ├── search_engine.py
     ├── pinyin_matcher.py
+    ├── history_manager.py
+    ├── history.json              # 历史记录数据
     └── __pycache__/
 
 ~/.local/share/dbus-1/services/
@@ -141,6 +144,21 @@ class KRunnerEdgeHelper(dbus.service.Object):
 - 全拼匹配：`liushuixian` → `流水线`
 - 首字母匹配：`lsx` → `流水线`
 - 混合文本支持：`EdgeOne 流水线`
+
+#### 5. history_manager.py
+**职责**：历史记录管理
+- 记录用户搜索关键词和选择的书签
+- 计算历史权重（频率 + 时间衰减）
+- 在搜索结果中提升常用书签的排名
+
+**数据存储**：`history.json` 与插件代码放在一起，卸载时一并删除
+
+**权重计算**：
+```
+频率因子 = ln(1 + frequency) / ln(21)  # 20次达到上限
+时间因子 = 0.5 ^ (经过天数 / 30)        # 30天半衰期
+历史权重 = 频率因子 * 0.6 + 时间因子 * 0.4
+```
 
 ## 🔐 DBus 接口规范
 

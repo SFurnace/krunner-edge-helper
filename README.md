@@ -12,6 +12,7 @@
 - ⚡ **智能匹配** - 分层匹配算法：精确 → 单词边界 → 前缀 → 拼音 → 子串
 - 📁 **文件夹搜索** - 同时搜索书签标题和所属文件夹名称
 - 🎯 **精确排序** - 按匹配质量智能排序结果
+- 📚 **历史记录** - 根据使用历史自动调整搜索结果排序，常用书签优先
 - 🚀 **零冲突** - 独立子目录安装，不与其他插件冲突
 
 ## 🚀 快速开始
@@ -49,6 +50,11 @@ TRIGGER_KEYWORD = "b"
 
 # 最大结果数
 MAX_RESULTS = 10
+
+# 历史记录设置
+HISTORY_ENABLED = True              # 启用历史记录排序
+HISTORY_BONUS_MAX = 25              # 历史记录最大加分
+HISTORY_HALF_LIFE_DAYS = 30.0       # 时间衰减半衰期（天）
 ```
 
 ## 🔧 管理
@@ -68,6 +74,7 @@ krunner-edge-helper/
 │   ├── bookmark_parser.py        # 书签解析器
 │   ├── search_engine.py          # 搜索引擎
 │   ├── pinyin_matcher.py         # 拼音匹配
+│   ├── history_manager.py        # 历史记录管理
 │   └── config.py                 # 配置文件
 ├── service/                      # 服务配置
 │   ├── org.kde.krunner.edgehelper.service

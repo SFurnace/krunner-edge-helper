@@ -73,6 +73,7 @@ cp "$SCRIPT_DIR/src/krunner_edge_helper.py" "$PLUGIN_DIR/"
 cp "$SCRIPT_DIR/src/bookmark_parser.py" "$PLUGIN_DIR/"
 cp "$SCRIPT_DIR/src/search_engine.py" "$PLUGIN_DIR/"
 cp "$SCRIPT_DIR/src/pinyin_matcher.py" "$PLUGIN_DIR/"
+cp "$SCRIPT_DIR/src/history_manager.py" "$PLUGIN_DIR/"
 cp "$SCRIPT_DIR/src/config.py" "$PLUGIN_DIR/"
 
 # Make main script executable

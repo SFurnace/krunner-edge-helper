@@ -37,3 +37,4 @@ __pycache__/
 
 # Test outputs
 test_output.txt
+/.agent-shell/

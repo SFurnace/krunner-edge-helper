@@ -72,10 +72,13 @@ class KRunnerEdgeHelper(dbus.service.Object):
             
             # Remove trigger keyword
             search_query = query[len(config.TRIGGER_KEYWORD) + 1:].strip()
-            
+
             if not search_query:
                 return ok_callback([])
-            
+
+            # Save for history tracking
+            self._last_search_query = search_query
+
             # Reload bookmarks if modified
             if self.parser.is_modified():
                 self._load_bookmarks()
@@ -133,16 +136,27 @@ class KRunnerEdgeHelper(dbus.service.Object):
     def Run(self, match_id: str, action_id: str):
         """
         Execute the selected match
-        Opens the bookmark in Edge browser
+        Opens the bookmark in Edge browser and records history
         """
         # Extract URL from match_id
         # Format: bookmark_<index>_<url>
         parts = match_id.split('_', 2)
         if len(parts) < 3:
             return
-        
+
         url = parts[2]
-        
+
+        # Find the bookmark object and record history
+        if hasattr(self, '_last_search_query'):
+            for bookmark in self.bookmarks:
+                if bookmark.url == url:
+                    if self.search_engine.history_manager:
+                        self.search_engine.history_manager.record_selection(
+                            self._last_search_query,
+                            bookmark
+                        )
+                    break
+
         # Try browser commands in order
         for browser_cmd in config.BROWSER_COMMANDS:
             try:

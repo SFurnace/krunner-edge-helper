@@ -28,3 +28,10 @@ BROWSER_COMMANDS = [
     ["microsoft-edge"],
     ["edge"],
 ]
+
+# History settings
+HISTORY_ENABLED = True                    # Enable history-based ranking
+HISTORY_HALF_LIFE_DAYS = 30.0             # Time decay half-life (days)
+HISTORY_BONUS_MAX = 25                    # Maximum history bonus points
+HISTORY_MIN_THRESHOLD_BYPASS = 0.5        # History weight to bypass FUZZY_THRESHOLD
+HISTORY_RETENTION_DAYS = 180              # Days to retain unused records

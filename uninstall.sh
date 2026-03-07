@@ -47,9 +47,20 @@ echo "5. Removing log file..."
 rm -f /tmp/krunner_edge_helper.log
 echo "   ✓ Log file removed"
 
-# Step 6: Restart KRunner
+# Step 6: Remove legacy history file (if exists from old versions)
 echo
-echo "6. Restarting KRunner..."
+echo "6. Checking for legacy history file..."
+LEGACY_HISTORY="$HOME/.local/share/krunner-edge-helper"
+if [ -d "$LEGACY_HISTORY" ]; then
+    rm -rf "$LEGACY_HISTORY"
+    echo "   ✓ Legacy history directory removed"
+else
+    echo "   No legacy history found"
+fi
+
+# Step 7: Restart KRunner
+echo
+echo "7. Restarting KRunner..."
 killall krunner 2>/dev/null || true
 kquitapp5 krunner 2>/dev/null || kquitapp6 krunner 2>/dev/null || true
 sleep 2

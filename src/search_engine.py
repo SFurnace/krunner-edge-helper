@@ -1,6 +1,6 @@
 """
 Search Engine for Edge Bookmarks
-Combines fuzzy search and pinyin matching
+Combines fuzzy search, pinyin matching, and history-based ranking
 """
 from typing import List, Tuple
 from rapidfuzz import fuzz
@@ -8,38 +8,83 @@ from bookmark_parser import Bookmark
 from pinyin_matcher import PinyinMatcher
 import config
 
+# Import history manager if enabled
+if config.HISTORY_ENABLED:
+    from history_manager import HistoryManager
+
 
 class SearchEngine:
-    """Fuzzy search engine with pinyin support"""
-    
+    """Fuzzy search engine with pinyin and history support"""
+
     def __init__(self):
         self.pinyin_matcher = PinyinMatcher()
+        self.history_manager = HistoryManager() if config.HISTORY_ENABLED else None
     
     def search(self, bookmarks: List[Bookmark], query: str) -> List[Tuple[Bookmark, int]]:
         """
-        Search bookmarks with multi-keyword matching and pinyin support
+        Search bookmarks with multi-keyword matching, pinyin, and history support
         Returns: List of (bookmark, score) tuples sorted by score descending
         """
         if not query:
             return []
-        
+
         results = []
-        query = query.strip()
-        
+        original_query = query.strip()
+
         # Split query into keywords by space
-        keywords = [kw.strip() for kw in query.split() if kw.strip()]
-        
+        keywords = [kw.strip() for kw in original_query.split() if kw.strip()]
+
         for bookmark in bookmarks:
-            score = self._calculate_score(bookmark, keywords)
-            
-            if score >= config.FUZZY_THRESHOLD:
-                results.append((bookmark, score))
-        
-        # Sort by score descending, prefer shorter names when scores are close
-        results.sort(key=lambda x: (-x[1], len(x[0].name), x[0].name.lower()))
-        
+            base_score = self._calculate_score(bookmark, keywords)
+
+            # Apply history boost if enabled
+            if self.history_manager and config.HISTORY_ENABLED:
+                final_score = self._apply_history_boost(
+                    base_score, original_query, bookmark
+                )
+            else:
+                final_score = base_score
+
+            # Include results that meet threshold OR have strong history
+            if final_score >= config.FUZZY_THRESHOLD:
+                results.append((bookmark, final_score))
+            elif (self.history_manager and
+                  base_score > 0 and
+                  self.history_manager.get_weight(original_query, bookmark.url) >= config.HISTORY_MIN_THRESHOLD_BYPASS):
+                # Allow history-boosted results slightly below threshold
+                results.append((bookmark, final_score))
+
+        # Sort by final score descending, history weight as tiebreaker
+        def sort_key(item):
+            bookmark, score = item
+            history_weight = 0.0
+            if self.history_manager:
+                history_weight = self.history_manager.get_weight(original_query, bookmark.url)
+            return (-score, -history_weight, len(bookmark.name), bookmark.name.lower())
+
+        results.sort(key=sort_key)
+
         # Limit results
         return results[:config.MAX_RESULTS]
+
+    def _apply_history_boost(self, base_score: int, query: str, bookmark: Bookmark) -> int:
+        """Apply history-based score boost"""
+        if not self.history_manager:
+            return base_score
+
+        history_weight = self.history_manager.get_weight(query, bookmark.url)
+
+        if history_weight == 0:
+            return base_score
+
+        # Calculate bonus
+        bonus = int(history_weight * config.HISTORY_BONUS_MAX)
+
+        # Special case: very strong history but low base score
+        if history_weight > 0.8 and base_score < 60:
+            base_score = max(base_score, 60)
+
+        return min(base_score + bonus, 100)
     
     def _calculate_score(self, bookmark: Bookmark, keywords: List[str]) -> int:
         """Calculate relevance score for a bookmark with multi-keyword matching"""
