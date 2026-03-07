@@ -98,18 +98,10 @@ class KRunnerEdgeHelper(dbus.service.Object):
                 else:
                     subtext = bookmark.url
 
-                # Get history weight for more precise relevance
-                history_weight = 0.0
-                if self.search_engine.history_manager:
-                    history_weight = self.search_engine.history_manager.get_weight(search_query, bookmark.url)
-
-                # Normalize relevance (0 to 100) as int32
+                # Relevance already calculated by search_engine (80% base + 20% history)
+                # Just normalize for KRunner format
                 relevance = int(min(score, 100))
-
-                # Relevance score as double (0.0 to 1.0)
-                # 60% final score + 40% direct history weight
-                # High history weight can significantly boost ranking
-                relevance_score = min(score / 100.0 * 0.6 + history_weight * 0.4, 1.0)
+                relevance_score = min(score / 100.0, 1.0)
 
                 # Icon
                 icon = 'internet-web-browser'

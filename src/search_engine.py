@@ -3,7 +3,6 @@ Search Engine for Edge Bookmarks
 Combines fuzzy search, pinyin matching, and history-based ranking
 """
 from typing import List, Tuple
-from rapidfuzz import fuzz
 from bookmark_parser import Bookmark
 from pinyin_matcher import PinyinMatcher
 import config
@@ -20,7 +19,7 @@ class SearchEngine:
         self.pinyin_matcher = PinyinMatcher()
         self.history_manager = HistoryManager() if config.HISTORY_ENABLED else None
     
-    def search(self, bookmarks: List[Bookmark], query: str) -> List[Tuple[Bookmark, int]]:
+    def search(self, bookmarks: List[Bookmark], query: str) -> List[Tuple[Bookmark, float]]:
         """
         Search bookmarks with multi-keyword matching, pinyin, and history support
         Returns: List of (bookmark, score) tuples sorted by score descending
@@ -37,55 +36,31 @@ class SearchEngine:
         for bookmark in bookmarks:
             base_score = self._calculate_score(bookmark, keywords)
 
-            # Apply history boost if enabled
-            if self.history_manager and config.HISTORY_ENABLED:
-                final_score = self._apply_history_boost(
-                    base_score, original_query, bookmark
-                )
-            else:
-                final_score = base_score
+            # Calculate final score: base score (capped at 80) + history bonus (max 20)
+            # Base similarity contributes up to 80 points, history contributes up to 20 points
+            history_weight = self.history_manager.get_weight(original_query, bookmark.url) if self.history_manager else 0.0
+            base_component = min(base_score, 80)  # Cap base score at 80
+            history_component = history_weight * config.HISTORY_SCORE_MAX  # History contributes max 20 points
+            final_score = base_component + history_component
 
             # Include results that meet threshold OR have strong history
             if final_score >= config.FUZZY_THRESHOLD:
                 results.append((bookmark, final_score))
-            elif (self.history_manager and
-                  base_score > 0 and
-                  self.history_manager.get_weight(original_query, bookmark.url) >= config.HISTORY_MIN_THRESHOLD_BYPASS):
+            elif base_score > 0 and history_weight >= config.HISTORY_MIN_THRESHOLD_BYPASS:
                 # Allow history-boosted results slightly below threshold
                 results.append((bookmark, final_score))
 
-        # Sort by final score descending, base score as primary, history as tiebreaker
-        # Internal sorting uses base similarity score only
+        # Sort by final score (base capped at 80 + history up to 20)
         def sort_key(item):
-            bookmark, score = item
-            # Use base score for primary sorting
-            # Secondary sort by name length and alphabetically for determinism
-            return (-score, len(bookmark.name), bookmark.name.lower())
+            bookmark, final_score = item
+            # Final score is already calculated as base_component + history_component
+            return (-final_score, len(bookmark.name), bookmark.name.lower())
 
         results.sort(key=sort_key)
 
         # Limit results
         return results[:config.MAX_RESULTS]
 
-    def _apply_history_boost(self, base_score: int, query: str, bookmark: Bookmark) -> int:
-        """Apply history-based score boost"""
-        if not self.history_manager:
-            return base_score
-
-        history_weight = self.history_manager.get_weight(query, bookmark.url)
-
-        if history_weight == 0:
-            return base_score
-
-        # Calculate bonus
-        bonus = int(history_weight * config.HISTORY_BONUS_MAX)
-
-        # Special case: very strong history but low base score
-        if history_weight > 0.8 and base_score < 60:
-            base_score = max(base_score, 60)
-
-        return min(base_score + bonus, 100)
-    
     def _calculate_score(self, bookmark: Bookmark, keywords: List[str]) -> int:
         """Calculate relevance score for a bookmark with multi-keyword matching"""
         
